@@ -33,7 +33,7 @@ function Chart({ coinId }: ChartProps) {
           series={[
             {
               name: "Price",
-              data: data?.map((price) => price.close),
+              data: data?.map(price => price.close) ?? [],
             },
           ]}
           options={{

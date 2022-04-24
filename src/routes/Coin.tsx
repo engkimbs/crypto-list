@@ -1,11 +1,11 @@
 import { useQuery } from "react-query";
 import { Helmet } from "react-helmet";
 import {
-  Switch,
+  Routes,
   Route,
   useLocation,
   useParams,
-  useRouteMatch,
+  useMatch,
 } from "react-router-dom";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
@@ -85,7 +85,9 @@ interface RouteParams {
   coinId: string;
 }
 interface RouteState {
-  name: string;
+  state: {
+    name: string;
+  }
 }
 interface InfoData {
   id: string;
@@ -142,10 +144,10 @@ interface PriceData {
 }
 
 function Coin() {
-  const { coinId } = useParams<RouteParams>();
-  const { state } = useLocation<RouteState>();
-  const priceMatch = useRouteMatch("/:coinId/price");
-  const chartMatch = useRouteMatch("/:coinId/chart");
+  const { coinId } = useParams<keyof RouteParams>() as RouteParams;
+  const { state } = useLocation() as RouteState;
+  const priceMatch = useMatch("/:coinId/price");
+  const chartMatch = useMatch("/:coinId/chart");
   const { isLoading: infoLoading, data: infoData } = useQuery<InfoData>(
     ["info", coinId],
     () => fetchCoinInfo(coinId)
@@ -157,7 +159,10 @@ function Coin() {
       refetchInterval: 5000,
     }
   );
-  const loading = infoLoading || tickersLoading;
+  const loading:boolean = infoLoading || tickersLoading;
+  if(loading)
+    return <Loader>Loading...</Loader>;
+
   return (
     <Container>
       <Helmet>
@@ -170,9 +175,6 @@ function Coin() {
           {state?.name ? state.name : loading ? "Loading..." : infoData?.name}
         </Title>
       </Header>
-      {loading ? (
-        <Loader>Loading...</Loader>
-      ) : (
         <>
           <Overview>
             <OverviewItem>
@@ -209,16 +211,11 @@ function Coin() {
             </Tab>
           </Tabs>
 
-          <Switch>
-            <Route path={`/:coinId/price`}>
-              <Price />
-            </Route>
-            <Route path={`/:coinId/chart`}>
-              <Chart coinId={coinId} />
-            </Route>
-          </Switch>
+          <Routes>
+            <Route path="price" element={<Price/>}/>
+            <Route path="chart" element={<Chart coinId={coinId}/>}/>
+          </Routes>
         </>
-      )}
     </Container>
   );
 }
